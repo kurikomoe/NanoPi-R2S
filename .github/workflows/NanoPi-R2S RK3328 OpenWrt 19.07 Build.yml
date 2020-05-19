@@ -29,12 +29,12 @@ jobs:
           sudo docker image prune -a -f
           sudo apt-get -y install upx-ucl texlive
           sudo apt-get -y purge dotnet* ghc* google* llvm* mysql* php* zulu* firefox hhvm
-          sudo apt-get -y autoremove --purge          
+          sudo apt-get -y autoremove --purge
           wget -O - https://raw.githubusercontent.com/friendlyarm/build-env-on-ubuntu-bionic/master/install.sh | bash
 
       #- name: Setup Debug Session
       #  uses: P3TERX/debugger-action@master
-  
+
       - name: Install Repo
         run: |
           git clone https://github.com/friendlyarm/repo
@@ -56,6 +56,9 @@ jobs:
           cp -r ../lede/package/lean package/
           sed -i 's/^src-git luci.*/src-git luci https:\/\/github.com\/coolsnowwolf\/luci/' feeds.conf.default
           sed -i 's/^src-git packages.*/src-git packages https:\/\/github.com\/coolsnowwolf\/packages/' feeds.conf.default
+          echo '' >> feeds.conf.default
+          echo 'src-git extra https://github.com/Andy2244/openwrt-extra.git' >> feeds.conf.default
+          cat feeds.conf.default
 
       - name: Install Extra Packages
         run: |
@@ -76,19 +79,19 @@ jobs:
           git clone -b master https://github.com/vernesong/OpenClash
           mv OpenClash/luci-app-openclash/ .
           rm -rf OpenClash/
-          
+
           git clone https://github.com/songchenwen/nanopi-r2s
           mv nanopi-r2s/luci-app-r2sflasher/ .
           rm -rf nanopi-r2s/
-          
+
           git clone https://github.com/pymumu/smartdns.git
           mv smartdns smartdns1
           mv smartdns1/package/openwrt .
           mv openwrt smartdns
           rm -rf smartdns1
-          
+
           cp -r ../../../package/luci-app-smartdns .
-          
+
       - name: Install Clash Binaries
         run: |
           cd friendlywrt-rk3328/friendlywrt/package/base-files/files
@@ -107,10 +110,13 @@ jobs:
           cd friendlywrt-rk3328/friendlywrt/include
           sed -i 's/dnsmasq /dnsmasq-full default-settings luci /' target.mk
 
-      - name: Update Feeds		
-        run: |		
-          cd friendlywrt-rk3328/friendlywrt		
-          ./scripts/feeds update -a		
+      - name: Update Feeds
+        run: |
+          cd friendlywrt-rk3328/friendlywrt
+          ./scripts/feeds clean
+          ./scripts/feeds update -a
+          ./scripts/feeds uninstall -a
+          ./scripts/feeds install -f -p extra -a
           ./scripts/feeds install -a
 
       - name: Install Mods
@@ -141,7 +147,7 @@ jobs:
         run: |
           cd friendlywrt-rk3328/friendlywrt
           sed -i '/uci commit luci/i\uci set luci.main.mediaurlbase=/luci-static/argon' package/lean/default-settings/files/zzz-default-settings
-           
+
       - name: Install UPX
         run: |
           ln -s /usr/bin/upx-ucl friendlywrt-rk3328/friendlywrt/staging_dir/host/bin/upx
@@ -172,7 +178,7 @@ jobs:
 
           find friendlywrt-rk3328/out/ -name "FriendlyWrt_*img*" | xargs -I{} sh -c 'f=$(basename $1); zip -r -j "./artifact/${f}.zip" $1' sh {} \;
           #find friendlywrt-rk3328/friendlywrt/bin/targets/rockchip-rk3328/generic -name "openwrt*-squashfs.img" | xargs -I{} sh -c 'f=$(basename $1); zip -r -j "./artifact/${f}.zip" $1' sh {} \;
-          
+
           cp friendlywrt-rk3328/friendlywrt/.config ./artifact/
 
       - name: Upload Artifact
