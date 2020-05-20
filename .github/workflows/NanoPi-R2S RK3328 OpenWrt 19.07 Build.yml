@@ -20,6 +20,9 @@ jobs:
         with:
           ref: master
 
+      - name: Debugging with tmate
+        uses: mxschmitt/action-tmate@v2
+
       - name: Initialize Environment
         env:
           DEBIAN_FRONTEND: noninteractive
